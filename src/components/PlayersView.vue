@@ -1,4 +1,3 @@
-// views/PlayersView.vue (Football Table UI)
 <template>
   <div class="container mt-4">
     <h1 class="mb-3 text-center">Players Table</h1>
@@ -22,7 +21,11 @@
         <tbody>
         <tr v-for="(player, index) in sortedPlayers" :key="player.id">
           <td>{{ index + 1 }}</td>
-          <td>{{ player.name }}</td>
+          <td>
+            <router-link :to="`/players/${player.id}`" class="text-decoration-none">
+              {{ player.name }}
+            </router-link>
+          </td>
           <td>{{ player.points }}</td>
           <td>{{ player.wins }}</td>
           <td>{{ player.losses }}</td>
@@ -53,18 +56,17 @@
 
 <script>
 import { usePlayerStore } from '../stores/playerStore.js';
-import {onMounted, computed} from "vue";
-import { ref } from 'vue';
+import { onMounted, computed, ref } from 'vue';
 import { storeToRefs } from 'pinia';
 
 export default {
   setup() {
     const store = usePlayerStore();
-    const newPlayer = ref({name: ''});
+    const newPlayer = ref({ name: '' });
 
     onMounted(() => {
       store.fetchPlayers();
-    })
+    });
 
     const { players } = storeToRefs(store);
 
@@ -72,16 +74,22 @@ export default {
       return [...store.players].sort((a, b) => b.points - a.points);
     });
 
+    const deletePlayer = (player) => {
+      store.deletePlayer(player.id);
+    };
+
+    const addNewPlayer = () => {
+      store.addPlayer(newPlayer.value);
+      newPlayer.value.name = '';
+    };
+
     return {
-      players: players,
+      players,
       sortedPlayers,
       fetchPlayers: store.fetchPlayers,
-      deletePlayer: (player) => store.deletePlayer(player.id),
+      deletePlayer,
       newPlayer,
-      addNewPlayer: () => {
-        store.addPlayer(newPlayer.value);
-        newPlayer.value.name = '';
-      },
+      addNewPlayer,
     };
   }
 };

@@ -16,6 +16,13 @@ export const usePlayerStore = defineStore('playerStore', {
             console.log(response.data);
             this.players = response.data;
         },
+        async fetchPlayer(id) {
+            const response = await apiClient.get(`${id}`);
+            return response.data;
+        },
+        async fetchPlayerMatches(id) {
+            return (await apiClient.get(`${id}/matches`)).data;
+        },
         async addPlayer(player) {
             console.log(player);
 
@@ -30,6 +37,10 @@ export const usePlayerStore = defineStore('playerStore', {
             } catch (error) {
                 console.error("Error adding player:", error);
             }
+        },
+        async updatePlayer(player) {
+          await apiClient.put(player.id, player);
+          await this.fetchPlayers();
         },
         async deletePlayer(id) {
             await apiClient.delete(id);
