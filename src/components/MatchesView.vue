@@ -34,16 +34,16 @@
         </tr>
         </thead>
         <tbody>
-        <tr v-for="(match, matchIndex) in matches" :key="match.id">
-          <td :rowspan="match.scores.length">{{ matchIndex + 1 }}</td>
-          <td :rowspan="match.scores.length">{{ match.date }}</td>
-          <template v-for="(score, scoreIndex) in match.scores" :key="score.id">
-            <tr v-if="scoreIndex > 0"></tr>
+        <template v-for="(match, matchIndex) in matches" :key="match.id">
+          <tr v-for="(score, scoreIndex) in match.scores" :key="score.id">
+            <!-- Only show the match index and date in the first row of each match -->
+            <td v-if="scoreIndex === 0" :rowspan="match.scores.length">{{ matchIndex + 1 }}</td>
+            <td v-if="scoreIndex === 0" :rowspan="match.scores.length">{{ match.date }}</td>
             <td>{{ score.player.name }}</td>
             <td>{{ score.team }}</td>
             <td>{{ score.goalsScored }}</td>
-          </template>
-        </tr>
+          </tr>
+        </template>
         </tbody>
       </table>
     </div>
@@ -53,7 +53,7 @@
 <script>
 import { useMatchStore } from '../stores/matchStore';
 import { usePlayerStore } from '../stores/playerStore';
-import { onMounted, ref } from 'vue';
+import {computed, onMounted, ref} from 'vue';
 
 export default {
   setup() {
@@ -61,15 +61,48 @@ export default {
     const playerStore = usePlayerStore();
     const newMatch = ref({ date: '', scores: [] });
 
+    const matches = computed(() => matchStore.matches);
+    const players = computed(() => playerStore.players);
+
     onMounted(() => {
       matchStore.fetchMatches();
       playerStore.fetchPlayers();
     });
 
     const addScore = () => {
-      if (newMatch.value.scores.length < 4) {
-        newMatch.value.scores.push({ player: null, team: 'TEAM_1', goalsScored: 0 });
+      const playerCount = newMatch.value.scores.length;
+
+      if (playerCount >= 4) {
+        alert("A match can only have 4 players (2 per team).");
+        return;
       }
+
+      let assignedTeam = '';
+
+      if (playerCount === 0) {
+        assignedTeam = 'TEAM_1';
+      } else if (playerCount === 1) {
+        assignedTeam = 'TEAM_2';
+      } else {
+        // Ensure each team has max 2 players
+        const team1Count = newMatch.value.scores.filter(s => s.team === 'TEAM_1').length;
+        const team2Count = newMatch.value.scores.filter(s => s.team === 'TEAM_2').length;
+
+        if (team1Count < 2) {
+          assignedTeam = 'TEAM_1';
+        } else if (team2Count < 2) {
+          assignedTeam = 'TEAM_2';
+        } else {
+          alert("Each team can only have 2 players.");
+          return;
+        }
+      }
+
+      newMatch.value.scores.push({
+        player: null, // Player will be selected from dropdown
+        team: assignedTeam, // Auto-assigned
+        goalsScored: 0
+      });
     };
 
 
@@ -83,13 +116,25 @@ export default {
         return;
       }
 
+      const team1Scores = newMatch.value.scores.filter(s => s.team === 'TEAM_1');
+      const team2Scores = newMatch.value.scores.filter(s => s.team === 'TEAM_2');
+
+      if (team1Scores.length === 0 || team2Scores.length === 0) {
+        alert("Each team must have at least one player.");
+        return;
+      }
+
+      const team1Goals = team1Scores.reduce((total, s) => total + s.goalsScored, 0);
+      const team2Goals = team2Scores.reduce((total, s) => total + s.goalsScored, 0);
+
+      if (team1Goals === team2Goals) {
+        alert("The match must have a clear winner. Adjust the goals scored.");
+        return;
+      }
+
       for (const score of newMatch.value.scores) {
         if (!score.player) {
           alert("Each score entry must have a player selected.");
-          return;
-        }
-        if (!score.team) {
-          alert("Each score entry must have a team selected.");
           return;
         }
       }
@@ -99,14 +144,14 @@ export default {
         return;
       }
 
-      // Attach the match reference to each score
+      // Match object to send
       const matchToSend = {
         date: newMatch.value.date,
         scores: newMatch.value.scores.map((score) => ({
           player: score.player,
           team: score.team,
           goalsScored: score.goalsScored,
-          match: null, // Backend should set this automatically
+          match: null, // Backend should handle match association
         })),
       };
 
@@ -120,9 +165,10 @@ export default {
       }
     };
 
+
     return {
-      matches: matchStore.matches,
-      players: playerStore.players,
+      matches: matches,
+      players: players,
       fetchMatches: matchStore.fetchMatches,
       fetchPlayers: playerStore.fetchPlayers,
       newMatch,

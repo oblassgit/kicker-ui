@@ -13,7 +13,6 @@
           <th>Points</th>
           <th>Wins</th>
           <th>Losses</th>
-          <th>Draws</th>
           <th>Goals Scored</th>
           <th>Goals Conceded</th>
           <th>Total Games</th>
@@ -27,7 +26,6 @@
           <td>{{ player.points }}</td>
           <td>{{ player.wins }}</td>
           <td>{{ player.losses }}</td>
-          <td>{{ player.draws }}</td>
           <td>{{ player.goalsScored }}</td>
           <td>{{ player.goalsConceded }}</td>
           <td>{{ player.totalGames }}</td>
