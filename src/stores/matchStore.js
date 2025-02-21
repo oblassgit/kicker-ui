@@ -18,7 +18,7 @@ export const useMatchStore = defineStore('matchStore', () => {
     const createMatch = async (matchData) => {
         try {
             await axios.post('http://localhost:8080/kicker/api/matches', matchData);
-            fetchMatches();
+            await fetchMatches();
         } catch (error) {
             console.error('Error creating match:', error);
         }
