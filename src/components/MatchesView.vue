@@ -6,7 +6,7 @@
 
     <div class="mb-4 p-3 border rounded bg-light">
       <h3>Create New Match</h3>
-      <input type="date" class="form-control mb-2" v-model="newMatch.date"/>
+      <input type="date" class="form-control mb-2" v-model="newMatch.date" :max="today"/>
       <div v-for="(score, index) in newMatch.scores" :key="index" class="d-flex gap-2 mb-2">
         <select class="form-control" v-model="score.player">
           <option v-for="player in players" :key="player.id" :value="player">{{ player.name }}</option>
@@ -29,19 +29,25 @@
       <div v-for="(match, matchIndex) in group.matches" :key="matchIndex" class="match-container" @click="openMatchDetail(match)">
         <div class="team">
           <div class="player-list">
-            <p v-for="score in match.team1Scores" :key="score.player.id">
+            <p v-for="score in match.scores.filter(s => s.team === 'TEAM_1')" :key="score.id">
               {{ score.player.name }} ({{ score.goalsScored }})
             </p>
           </div>
         </div>
 
         <div class="score">
-          <h2>{{ match.team1Goals }} - {{ match.team2Goals }}</h2>
+          <h2>
+            {{
+              match.scores.filter(s => s.team === 'TEAM_1').reduce((acc, s) => acc + s.goalsScored, 0)
+            }} - {{
+              match.scores.filter(s => s.team === 'TEAM_2').reduce((acc, s) => acc + s.goalsScored, 0)
+            }}
+          </h2>
         </div>
 
         <div class="team">
           <div class="player-list">
-            <p v-for="score in match.team2Scores" :key="score.player.id">
+            <p v-for="score in match.scores.filter(s => s.team === 'TEAM_2')" :key="score.id">
               {{ score.player.name }} ({{ score.goalsScored }})
             </p>
           </div>
@@ -66,10 +72,13 @@ export default {
 
     const players = computed(() => playerStore.players)
 
+    const today = new Date().toISOString().split('T')[0]; // Format: 'YYYY-MM-DD'
+
     const groupedMatches = computed(() => {
       const groups = [];
       const matchesByDate = {};
 
+      // Group matches by date while keeping the original match structure
       matchStore.matches.forEach(match => {
         if (!match || !match.scores || match.scores.length === 0) return; // Ensure valid match data
 
@@ -77,13 +86,7 @@ export default {
           matchesByDate[match.date] = [];
         }
 
-        matchesByDate[match.date].push({
-          date: match.date,
-          team1Scores: match.scores.filter(s => s.team === 'TEAM_1'),
-          team2Scores: match.scores.filter(s => s.team === 'TEAM_2'),
-          team1Goals: match.scores.filter(s => s.team === 'TEAM_1').reduce((acc, s) => acc + s.goalsScored, 0),
-          team2Goals: match.scores.filter(s => s.team === 'TEAM_2').reduce((acc, s) => acc + s.goalsScored, 0),
-        });
+        matchesByDate[match.date].push(match); // Preserve original structure
       });
 
       // Sort dates in descending order (most recent first)
@@ -96,13 +99,14 @@ export default {
             date: new Intl.DateTimeFormat('en-US', {
               weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
             }).format(new Date(date)),  // Convert to readable format
-            matches: matchesByDate[date],
+            matches: matchesByDate[date], // Keep original match objects
           });
         }
       });
 
       return groups;
     });
+
 
 
 
@@ -153,7 +157,8 @@ export default {
     };
 
     const openMatchDetail = async (match) => {
-      await router.push('/matches/' + match.id);
+      console.log(match);
+      await router.push(`/matches/${match.id}`);
     };
 
     const createMatch = () => {
@@ -221,7 +226,8 @@ export default {
       newMatch,
       addScore,
       removeScore,
-      createMatch
+      createMatch,
+      today
     };
   }
 };
