@@ -1,4 +1,3 @@
-// views/MatchesView.vue
 <template>
   <div class="container mt-4">
     <h1 class="mb-3 text-center">Matches</h1>
@@ -22,93 +21,29 @@
       <button class="btn btn-success" @click="createMatch">Create Match</button>
     </div>
 
-    <div v-for="(group, index) in groupedMatches" :key="index" class="mb-4">
-      <h3 class="text-left date-divider" v-if="index === 0 || groupedMatches[index - 1].date !== group.date">
-        {{ group.date }}
-      </h3>
-      <div v-for="(match, matchIndex) in group.matches" :key="matchIndex" class="match-container" @click="openMatchDetail(match)">
-        <div class="team">
-          <div class="player-list">
-            <p v-for="score in match.scores.filter(s => s.team === 'TEAM_1')" :key="score.id">
-              {{ score.player.name }} ({{ score.goalsScored }})
-            </p>
-          </div>
-        </div>
-
-        <div class="score">
-          <h2>
-            {{
-              match.scores.filter(s => s.team === 'TEAM_1').reduce((acc, s) => acc + s.goalsScored, 0)
-            }} - {{
-              match.scores.filter(s => s.team === 'TEAM_2').reduce((acc, s) => acc + s.goalsScored, 0)
-            }}
-          </h2>
-        </div>
-
-        <div class="team">
-          <div class="player-list">
-            <p v-for="score in match.scores.filter(s => s.team === 'TEAM_2')" :key="score.id">
-              {{ score.player.name }} ({{ score.goalsScored }})
-            </p>
-          </div>
-        </div>
-      </div>
-    </div>
-
+    <MatchList :matches="matchStore.matches" />
   </div>
 </template>
 
 <script>
 import { useMatchStore } from '../stores/matchStore';
 import { usePlayerStore } from '../stores/playerStore';
-import {computed, onMounted, ref} from 'vue';
-import router from "@/router.js";
+import { onMounted, ref } from 'vue';
+import MatchList from '@/components/MatchList.vue';
+import {storeToRefs} from "pinia";
 
 export default {
+  components: {
+    MatchList
+  },
   setup() {
+    const today = new Date().toISOString().split('T')[0];
+
     const matchStore = useMatchStore();
     const playerStore = usePlayerStore();
-    const newMatch = ref({ date: '', scores: [] });
+    const newMatch = ref({ date: today, scores: [] });
 
-    const players = computed(() => playerStore.players)
-
-    const today = new Date().toISOString().split('T')[0]; // Format: 'YYYY-MM-DD'
-
-    const groupedMatches = computed(() => {
-      const groups = [];
-      const matchesByDate = {};
-
-      // Group matches by date while keeping the original match structure
-      matchStore.matches.forEach(match => {
-        if (!match || !match.scores || match.scores.length === 0) return; // Ensure valid match data
-
-        if (!matchesByDate[match.date]) {
-          matchesByDate[match.date] = [];
-        }
-
-        matchesByDate[match.date].push(match); // Preserve original structure
-      });
-
-      // Sort dates in descending order (most recent first)
-      const sortedDates = Object.keys(matchesByDate)
-          .sort((a, b) => new Date(b) - new Date(a));
-
-      sortedDates.forEach(date => {
-        if (matchesByDate[date].length > 0) {
-          groups.push({
-            date: new Intl.DateTimeFormat('en-US', {
-              weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
-            }).format(new Date(date)),  // Convert to readable format
-            matches: matchesByDate[date], // Keep original match objects
-          });
-        }
-      });
-
-      return groups;
-    });
-
-
-
+    const { players } = storeToRefs(playerStore);
 
     onMounted(() => {
       matchStore.fetchMatches();
@@ -144,21 +79,11 @@ export default {
         }
       }
 
-      newMatch.value.scores.push({
-        player: null, // Player will be selected from dropdown
-        team: assignedTeam, // Auto-assigned
-        goalsScored: 0
-      });
+      newMatch.value.scores.push({ player: null, team: assignedTeam, goalsScored: 0 });
     };
-
 
     const removeScore = (index) => {
-        newMatch.value.scores.splice(index, 1);
-    };
-
-    const openMatchDetail = async (match) => {
-      console.log(match);
-      await router.push(`/matches/${match.id}`);
+      newMatch.value.scores.splice(index, 1);
     };
 
     const createMatch = () => {
@@ -209,77 +134,31 @@ export default {
       try {
         console.log(JSON.stringify(matchToSend, null, 2)); // Debugging
         matchStore.createMatch(matchToSend);
-        newMatch.value.date = '';
+        newMatch.value.date = today;
         newMatch.value.scores = [];
       } catch (e) {
         alert("Error creating match.");
       }
     };
 
-
     return {
-      groupedMatches,
-      players: players,
+      matchStore,
+      newMatch,
       fetchMatches: matchStore.fetchMatches,
       fetchPlayers: playerStore.fetchPlayers,
-      openMatchDetail,
-      newMatch,
       addScore,
       removeScore,
       createMatch,
-      today
+      today,
+      players
     };
   }
 };
 </script>
 
 <style scoped>
-.match-container {
-  display: flex;
-  align-items: center;
-  justify-content: center; /* Ensure everything is centered */
-  padding: 1rem;
-  border-radius: 8px;
-  background-color: #f8f9fa;
-  border: 1px solid #ddd;
-  text-align: center;
-}
-
-.match-container:hover {
-  background-color: #e9ecef;
-  border: 2px solid #ddd;
-}
-
-.team {
-  flex: 1; /* Both teams take equal space */
-  display: flex;
-  flex-direction: column;
-  align-items: center; /* Centers text inside the team div */
-}
-
-.score {
-  flex: 0 0 150px; /* Fixed width for score */
-  text-align: center;
-  font-size: 1.8rem;
-  font-weight: bold;
-}
-
-.player-list {
-  margin-top: 10px;
-}
-
 .player-list p {
-  margin: 5px 0; /* Removes bullet points & ensures spacing */
+  margin: 5px 0;
   font-size: 1.1rem;
-}
-.date-divider {
-  font-size: 0.9rem; /* Make text smaller */
-  font-weight: normal; /* Reduce boldness */
-  background-color: #e9ecef; /* Lighter background */
-  color: #6c757d; /* Muted text color */
-  padding-inline: 1rem; /* Reduce padding */
-  padding-block: 0.5rem;
-  margin: 10px 0; /* Add some space */
-  border-radius: 5px; /* Slight rounding */
 }
 </style>

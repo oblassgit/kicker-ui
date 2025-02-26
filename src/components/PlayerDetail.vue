@@ -17,32 +17,7 @@
       <hr />
 
       <h4>Matches Played</h4>
-      <div class="table-responsive" v-if="playerMatches.length > 0">
-        <table class="table table-striped table-bordered text-center">
-          <thead class="table-dark">
-          <tr>
-            <th>#</th>
-            <th>Date</th>
-            <th>Player</th>
-            <th>Team</th>
-            <th>Goals Scored</th>
-          </tr>
-          </thead>
-          <tbody>
-          <template v-for="(match, matchIndex) in playerMatches" :key="match.id">
-            <tr v-for="(score, scoreIndex) in match.scores" :key="score.id" :class="{ 'highlighted': score.player.id === player.id }">
-              <!-- Only show the match index and date in the first row of each match -->
-              <td v-if="scoreIndex === 0" :rowspan="match.scores.length" class="no-highlight">{{ matchIndex + 1 }}</td>
-              <td v-if="scoreIndex === 0" :rowspan="match.scores.length" class="no-highlight">{{ match.date }}</td>
-              <td>{{ score.player.name }}</td>
-              <td>{{ score.team }}</td>
-              <td>{{ score.goalsScored }}</td>
-            </tr>
-          </template>
-          </tbody>
-        </table>
-      </div>
-      <p v-else>No matches found for this player.</p>
+      <MatchList :matches="playerMatches" />
     </div>
 
     <div v-else>
@@ -64,8 +39,10 @@
 import { usePlayerStore } from '../stores/playerStore.js';
 import { onMounted, ref } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
+import MatchList from "@/components/MatchList.vue";
 
 export default {
+  components: { MatchList },
   setup() {
     const store = usePlayerStore();
     const route = useRoute();
@@ -79,7 +56,7 @@ export default {
       if (player.value) {
         playerMatches.value = await store.fetchPlayerMatches(playerId);
       }
-      console.log(playerMatches.value);
+      console.log(playerMatches.value); // Ensure this logs the expected data
     });
 
     const updatePlayer = async () => {
