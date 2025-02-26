@@ -48,8 +48,12 @@ export default {
     const { players } = storeToRefs(playerStore);
 
     onMounted(() => {
-      matchStore.fetchMatches();
-      playerStore.fetchPlayers();
+      if (!matchStore.matches.length) {
+        matchStore.fetchMatches();
+      }
+      if (!playerStore.players.length) {
+        playerStore.fetchPlayers();
+      }
     });
 
     const addScore = () => {

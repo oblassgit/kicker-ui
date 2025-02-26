@@ -53,7 +53,7 @@
 
 <script>
 import { usePlayerStore } from '../stores/playerStore.js';
-import { onMounted, computed, ref } from 'vue';
+import {onMounted, computed, ref, onUnmounted} from 'vue';
 import { storeToRefs } from 'pinia';
 import {useRouter} from "vue-router";
 
@@ -64,8 +64,28 @@ export default {
     const store = usePlayerStore();
     const newPlayer = ref({ name: '' });
 
+
+    const REFRESH_INTERVAL = 30000; // 30 seconds
+    let refreshInterval;
+
+    const startPolling = () => {
+      // Initial fetch if store is empty
+      if (!store.players.length) {
+        store.fetchPlayers()
+      }
+
+      // Setup periodic refresh
+      refreshInterval = setInterval(() => {
+        store.fetchPlayers();
+      }, REFRESH_INTERVAL);
+    };
+
     onMounted(() => {
-      store.fetchPlayers();
+      startPolling()
+    });
+
+    onUnmounted(() => {
+      clearInterval(refreshInterval);
     });
 
     const { players } = storeToRefs(store);
