@@ -15,26 +15,21 @@
           <th>Goals Scored</th>
           <th>Goals Conceded</th>
           <th>Total Games</th>
-          <th>Actions</th>
         </tr>
         </thead>
         <tbody>
-        <tr v-for="(player, index) in sortedPlayers" :key="player.id">
+        <tr v-for="(player, index) in sortedPlayers"
+            :key="player.id"
+            class="player-row"
+            @click="router.push(`/players/${player.id}`)">
           <td>{{ index + 1 }}</td>
-          <td>
-            <router-link :to="`/players/${player.id}`" class="text-decoration-none">
-              {{ player.name }}
-            </router-link>
-          </td>
+          <td>{{ player.name }}</td>
           <td>{{ player.points }}</td>
           <td>{{ player.wins }}</td>
           <td>{{ player.losses }}</td>
           <td>{{ player.goalsScored }}</td>
           <td>{{ player.goalsConceded }}</td>
           <td>{{ player.totalGames }}</td>
-          <td>
-            <button class="btn btn-danger btn-sm" @click="deletePlayer(player)">Delete</button>
-          </td>
         </tr>
         </tbody>
       </table>
@@ -44,10 +39,12 @@
       <h4>Add New Player</h4>
       <div class="row">
         <div class="col-md-6 mb-2">
-          <input class="form-control" v-model="newPlayer.name" placeholder="Enter player name" />
+          <input class="form-control" v-model="newPlayer.name" placeholder="Enter player name" @keyup.enter="addNewPlayer"/>
         </div>
         <div class="col-md-6 mb-2">
-          <button class="btn btn-success" @click="addNewPlayer">Add Player</button>
+          <button class="btn btn-success" @click="addNewPlayer">
+            Add Player <span class="enter-key-symbol">⏎</span>
+          </button>
         </div>
       </div>
     </div>
@@ -58,9 +55,12 @@
 import { usePlayerStore } from '../stores/playerStore.js';
 import { onMounted, computed, ref } from 'vue';
 import { storeToRefs } from 'pinia';
+import {useRouter} from "vue-router";
 
 export default {
+
   setup() {
+    const router = useRouter();
     const store = usePlayerStore();
     const newPlayer = ref({ name: '' });
 
@@ -74,10 +74,6 @@ export default {
       return [...store.players].sort((a, b) => b.points - a.points);
     });
 
-    const deletePlayer = (player) => {
-      store.deletePlayer(player.id);
-    };
-
     const addNewPlayer = () => {
       store.addPlayer(newPlayer.value);
       newPlayer.value.name = '';
@@ -87,10 +83,31 @@ export default {
       players,
       sortedPlayers,
       fetchPlayers: store.fetchPlayers,
-      deletePlayer,
       newPlayer,
       addNewPlayer,
+      router
     };
   }
 };
 </script>
+
+<style scoped>
+.enter-key-symbol {
+  font-size: 0.8em;
+  opacity: 0.7;
+  margin-left: 4px;
+}
+.player-row {
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.player-row:hover {
+  background-color: #e9ecef !important;
+}
+
+/* Prevent double click selection */
+.player-row td {
+  user-select: none;
+}
+</style>

@@ -8,7 +8,9 @@
       <input type="date" class="form-control mb-2" v-model="newMatch.date" :max="today"/>
       <div v-for="(score, index) in newMatch.scores" :key="index" class="d-flex gap-2 mb-2">
         <select class="form-control" v-model="score.player">
-          <option v-for="player in players" :key="player.id" :value="player">{{ player.name }}</option>
+          <option v-for="player in availablePlayers(index)" :key="player.id" :value="player">
+            {{ player.name }}
+          </option>
         </select>
         <select class="form-control" v-model="score.team">
           <option value="TEAM_1">TEAM 1</option>
@@ -92,6 +94,14 @@ export default {
         return;
       }
 
+      // Check for duplicate players
+      const playerIds = newMatch.value.scores.map(score => score.player?.id);
+      const uniquePlayerIds = new Set(playerIds);
+      if (playerIds.length !== uniquePlayerIds.size) {
+        alert("Each player can only participate once in a match.");
+        return;
+      }
+
       const team1Scores = newMatch.value.scores.filter(s => s.team === 'TEAM_1');
       const team2Scores = newMatch.value.scores.filter(s => s.team === 'TEAM_2');
 
@@ -141,6 +151,13 @@ export default {
       }
     };
 
+    const availablePlayers = (currentIndex) => {
+      const selectedPlayers = newMatch.value.scores
+          .filter((_, index) => index !== currentIndex)
+          .map(score => score.player?.id);
+      return players.value.filter(player => !selectedPlayers.includes(player.id));
+    };
+
     return {
       matchStore,
       newMatch,
@@ -150,7 +167,8 @@ export default {
       removeScore,
       createMatch,
       today,
-      players
+      players,
+      availablePlayers
     };
   }
 };

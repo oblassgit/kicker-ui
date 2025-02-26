@@ -40,7 +40,7 @@
         <div class="d-flex justify-content-between">
           <div class="team-edit">
             <h4>Team 1 Scores</h4>
-            <div v-for="(score, index) in team1Scores" :key="score.id" class="mb-2">
+            <div v-for="(score) in team1Scores" :key="score.id" class="mb-2">
               <label>{{ score.player.name }}:</label>
               <input
                   type="number"
@@ -53,7 +53,7 @@
 
           <div class="team-edit">
             <h4>Team 2 Scores</h4>
-            <div v-for="(score, index) in team2Scores" :key="score.id" class="mb-2">
+            <div v-for="(score) in team2Scores" :key="score.id" class="mb-2">
               <label>{{ score.player.name }}:</label>
               <input
                   type="number"
@@ -78,6 +78,7 @@
 import { useMatchStore } from '@/stores/matchStore';
 import { onMounted, ref, computed } from 'vue';
 import { useRoute } from 'vue-router';
+import router from "@/router.js";
 
 export default {
   setup() {
@@ -125,7 +126,10 @@ export default {
     };
 
     const deleteMatch = async () => {
-      await matchStore.deleteMatch(match.value.id);
+      if (confirm(`Are you sure you want to delete this match?`)) {
+        await matchStore.deleteMatch(match.value.id);
+        await router.push('/matches');
+      }
     };
 
     return {
