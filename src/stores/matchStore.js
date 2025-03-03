@@ -1,9 +1,10 @@
 // stores/matchStore.js
 import { defineStore } from 'pinia';
 import axios from 'axios';
+const backendUrl = import.meta.env.VITE_BACKEND_URL;
 
 const apiClient = axios.create({
-    baseURL: "http://127.0.0.1:8080/kicker/api/matches", // Adjust baseURL to your backend
+    baseURL: `${backendUrl}/kicker/api/matches`,
     headers: {
         "Content-Type": "application/json",
     },

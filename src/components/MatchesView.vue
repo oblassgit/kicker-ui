@@ -16,21 +16,21 @@
           <option value="TEAM_1">TEAM 1</option>
           <option value="TEAM_2">TEAM 2</option>
         </select>
-        <input type="number" class="form-control" v-model="score.goalsScored" placeholder="Goals" min="0" max="10"/>
+        <input type="number" class="form-control" v-model="score.goalsScored" placeholder="Goals" min="0" max="10" step="1"/>
         <button class="btn btn-danger" @click="removeScore(index)">X</button>
       </div>
       <button class="btn btn-secondary me-2" @click="addScore">+ Add Player</button>
       <button class="btn btn-success" @click="createMatch">Create Match</button>
     </div>
 
-    <MatchList :matches="matchStore.matches" />
+    <MatchList :matches="matchStore.matches"/>
   </div>
 </template>
 
 <script>
-import { useMatchStore } from '../stores/matchStore';
-import { usePlayerStore } from '../stores/playerStore';
-import { onMounted, ref } from 'vue';
+import {useMatchStore} from '../stores/matchStore';
+import {usePlayerStore} from '../stores/playerStore';
+import {onMounted, ref} from 'vue';
 import MatchList from '@/components/MatchList.vue';
 import {storeToRefs} from "pinia";
 
@@ -43,9 +43,9 @@ export default {
 
     const matchStore = useMatchStore();
     const playerStore = usePlayerStore();
-    const newMatch = ref({ date: today, scores: [] });
+    const newMatch = ref({date: today, scores: []});
 
-    const { players } = storeToRefs(playerStore);
+    const {players} = storeToRefs(playerStore);
 
     onMounted(() => {
       if (!matchStore.matches.length) {
@@ -85,7 +85,7 @@ export default {
         }
       }
 
-      newMatch.value.scores.push({ player: null, team: assignedTeam, goalsScored: 0 });
+      newMatch.value.scores.push({player: null, team: assignedTeam, goalsScored: 0});
     };
 
     const removeScore = (index) => {
@@ -125,6 +125,14 @@ export default {
       for (const score of newMatch.value.scores) {
         if (!score.player) {
           alert("Each score entry must have a player selected.");
+          return;
+        }
+        if (score.goalsScored < 0 || score.goalsScored > 10) {
+          alert("Goals scored must be between 0 and 10.");
+          return;
+        }
+        if (score.goalsScored % 1 !== 0) {
+          alert("Goals scored must be a whole number.");
           return;
         }
       }
@@ -172,7 +180,7 @@ export default {
       createMatch,
       today,
       players,
-      availablePlayers
+      availablePlayers,
     };
   }
 };

@@ -67,7 +67,7 @@ export default {
     const deletePlayer = async () => {
       if (confirm(`Are you sure you want to delete ${player.value.name}?`)) {
         await store.deletePlayer(player.value.id);
-        await router.push('/players');
+        await router.replace({name: 'players'});
       }
     };
 

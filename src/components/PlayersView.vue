@@ -21,7 +21,7 @@
         <tr v-for="(player, index) in sortedPlayers"
             :key="player.id"
             class="player-row"
-            @click="router.push(`/players/${player.id}`)">
+            @click="router.push({ name: 'playerDetails', params: {id: player.id}})">
           <td>{{ index + 1 }}</td>
           <td>{{ player.name }}</td>
           <td>{{ player.points }}</td>
@@ -64,7 +64,6 @@ export default {
     const store = usePlayerStore();
     const newPlayer = ref({ name: '' });
 
-
     const REFRESH_INTERVAL = 30000; // 30 seconds
     let refreshInterval;
 
@@ -81,6 +80,7 @@ export default {
     };
 
     onMounted(() => {
+      store.fetchPlayers();
       startPolling()
     });
 

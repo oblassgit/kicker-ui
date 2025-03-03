@@ -34,7 +34,7 @@
     <!-- Edit Form -->
     <div v-else class="edit-form">
       <label for="matchDate">Match Date:</label>
-      <input type="date" v-model="editableMatch.date" class="form-control mb-3" />
+      <input type="date" v-model="editableMatch.date" class="form-control mb-3" :max="today"/>
 
       <div v-if="isEditing && editableMatch.scores">
         <div class="d-flex justify-content-between">
@@ -46,6 +46,8 @@
                   type="number"
                   v-model.number="editableMatch.scores.find(s => s.id === score.id).goalsScored"
                   min="0"
+                  max = "10"
+                  step = "1"
                   class="form-control"
               />
             </div>
@@ -59,6 +61,8 @@
                   type="number"
                   v-model.number="editableMatch.scores.find(s => s.id === score.id).goalsScored"
                   min="0"
+                  max = "10"
+                  step = "1"
                   class="form-control"
               />
             </div>
@@ -88,6 +92,8 @@ export default {
     const isEditing = ref(false);
     const editableMatch = ref({});
 
+    const today = new Date().toISOString().split('T')[0];
+
     // Fetch match by ID
     onMounted(async () => {
       const matchId = route.params.id;
@@ -101,6 +107,33 @@ export default {
     const team2Scores = computed(() => match.value?.scores.filter(score => score.team === 'TEAM_2') || []);
     const team1Goals = computed(() => team1Scores.value.reduce((acc, score) => acc + score.goalsScored, 0));
     const team2Goals = computed(() => team2Scores.value.reduce((acc, score) => acc + score.goalsScored, 0));
+
+    const validateMatchScores = () => {
+      const editableTeam1Goals = editableMatch.value.scores
+          .filter(score => score.team === 'TEAM_1')
+          .reduce((total, score) => total + score.goalsScored, 0);
+      const editableTeam2Goals = editableMatch.value.scores
+          .filter(score => score.team === 'TEAM_2')
+          .reduce((total, score) => total + score.goalsScored, 0);
+
+      if (editableTeam1Goals === editableTeam2Goals) {
+        alert("The match must have a clear winner. Adjust the goals scored.");
+        return false;
+      }
+
+      for (const score of editableMatch.value.scores) {
+        if (score.goalsScored < 0 || score.goalsScored > 10) {
+          alert("Goals scored must be between 0 and 10.");
+          return false;
+        }
+        if (score.goalsScored % 1 !== 0) {
+          alert("Goals scored must be a whole number.");
+          return false;
+        }
+      }
+
+      return true;
+    };
 
     // Format date for display
     const formatDate = (dateString) => {
@@ -116,6 +149,8 @@ export default {
 
     const updateMatch = async () => {
       try {
+        if (!validateMatchScores()) return;
+
         console.log(match.value);
         await matchStore.updateMatch(match.value.id, editableMatch.value);
         match.value = JSON.parse(JSON.stringify(editableMatch.value)); // Reflect changes
@@ -144,6 +179,7 @@ export default {
       cancelEdit,
       updateMatch,
       deleteMatch,
+      today
     };
   },
 };
